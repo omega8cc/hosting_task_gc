@@ -11,7 +11,7 @@ function hosting_task_gc_hosting_queues() {
   $count = $row->num_sites;
   $result2 = hosting_task_gc_count_platforms();
   $row2 = db_fetch_object($result2);
-  $count2 = $row->num_platforms;
+  $count2 = $row2->num_platforms;
   $queue['task_gc'] = array(
     'name' => t('Task GC'),
     'description' => t('Process the garbage collection of task logs.'),
