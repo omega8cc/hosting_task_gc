@@ -79,7 +79,7 @@ function hosting_task_gc_list_platforms() {
 }
 
 function hosting_task_gc_list_instances() {
-  $query = "SELECT iid FROM {hosting_package_instance} WHERE rid NOT IN (SELECT nid from {hosting_platform}) AND rid NOT IN (SELECT nid from {hosting_site}) AND rid NOT IN (SELECT iid FROM {hosting_package_instance}) LIMIT 100";
+  $query = "SELECT iid FROM {hosting_package_instance} WHERE rid NOT IN (SELECT nid from {hosting_platform}) AND rid NOT IN (SELECT nid from {hosting_site}) AND rid NOT IN (SELECT iid FROM {hosting_package_instance}) LIMIT 10000";
   return db_query($query);
 }
 
