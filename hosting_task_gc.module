@@ -9,6 +9,9 @@ function hosting_task_gc_hosting_queues() {
   $result = hosting_task_gc_count_sites();
   $row = db_fetch_object($result);
   $count = $row->num_sites;
+  $result2 = hosting_task_gc_count_platforms();
+  $row2 = db_fetch_object($result2);
+  $count2 = $row->num_platforms;
   $queue['task_gc'] = array(
     'name' => t('Task GC'),
     'description' => t('Process the garbage collection of task logs.'),
@@ -17,9 +20,9 @@ function hosting_task_gc_hosting_queues() {
     'min_threads' => 6,
     'max_threads' => 12,
     'threshold' => 100,
-    'total_items' => $count,
-    'singular' => t('site'),
-    'plural' => t('sites'),
+    'total_items' => $count + $count2,
+    'singular' => t('site/platform'),
+    'plural' => t('sites/platforms'),
   );
   return $queue;
 }
@@ -33,11 +36,11 @@ function hosting_task_gc_queue($count) {
   $user = user_load(1);
   $result = hosting_task_gc_list_sites();
   while ($site = db_fetch_object($result)) {
-    $query = "SELECT nid FROM {hosting_task} WHERE rid = %d";
-    $tasks_to_remove = db_query($query, $site->nid);
-    while ($row = db_fetch_object($tasks_to_remove)) {
-      node_delete($row->nid);
-    }
+    node_delete($site->nid);
+  }
+  $result2 = hosting_task_gc_list_platforms();
+  while ($platform = db_fetch_object($result2)) {
+    node_delete($platform->nid);
   }
   $user = $old_user;
   $query = "SELECT DISTINCT h.vid FROM {hosting_task_log} h LEFT OUTER JOIN {node_revisions} n ON h.vid = n.vid WHERE n.vid IS NULL LIMIT 100";
@@ -51,11 +54,21 @@ function hosting_task_gc_queue($count) {
 }
 
 function hosting_task_gc_list_sites() {
-  $query = "SELECT DISTINCT s.nid FROM {hosting_site} s INNER JOIN {hosting_task} t ON s.nid = t.rid WHERE s.status = %d LIMIT 5";
+  $query = "SELECT DISTINCT s.nid FROM {hosting_site} s WHERE s.status = %d LIMIT 5";
   return db_query($query, HOSTING_SITE_DELETED);
 }
 
+function hosting_task_gc_list_platforms() {
+  $query = "SELECT DISTINCT p.nid FROM {hosting_platform} p WHERE p.status = %d LIMIT 5";
+  return db_query($query, HOSTING_PLATFORM_DELETED);
+}
+
 function hosting_task_gc_count_sites() {
-  $query = "SELECT COUNT(DISTINCT s.nid) AS num_sites FROM {hosting_site} s INNER JOIN {hosting_task} t ON s.nid = t.rid WHERE s.status = %d";
+  $query = "SELECT COUNT(DISTINCT s.nid) AS num_sites FROM {hosting_site} s WHERE s.status = %d";
   return db_query($query, HOSTING_SITE_DELETED);
+}
+
+function hosting_task_gc_count_platforms() {
+  $query = "SELECT COUNT(DISTINCT p.nid) AS num_platforms FROM {hosting_platform} p WHERE p.status = %d";
+  return db_query($query, HOSTING_PLATFORM_DELETED);
 }
